@@ -1,0 +1,50 @@
+---
+title: "log_reg_Tennis"
+author: "Augustus Ge"
+date: "12/4/2019"
+output: pdf_document
+---
+
+```{r}
+pacman::p_load(dplyr, neuralnet, caret, verification)
+```
+
+```{r}
+# Read in files
+grass_tennis = read.csv("data/grass_matches_with_feature.csv")
+raw_tennis = read.csv("data/mens/combined_raw_data.csv")
+round_16 = read.csv("data/wimbledon_2019.csv")
+```
+
+```{r}
+# Prepare training dataset
+features_list = c('diff_rank', 'diff_match_win_percent', 'diff_games_win_percent', 'diff_5_set_match_win_percent', 'diff_close_sets_percent', 'diff_match_win_percent_grass', 'diff_games_win_percent_grass', 'diff_5_set_match_win_percent_grass', 'diff_close_sets_percent_grass', 'diff_match_win_percent_52', 'diff_games_win_percent_52', 'diff_5_set_match_win_percent_52', 'diff_close_sets_percent_52', 'diff_match_win_percent_grass_60', 'diff_games_win_percent_grass_60', 'diff_5_set_match_win_percent_grass_60', 'diff_close_sets_percent_grass_60', 'diff_match_win_percent_hh', 'diff_games_win_percent_hh', 'diff_match_win_percent_grass_hh', 'diff_games_win_percent_grass_hh')
+
+grass_tennis = grass_tennis[complete.cases(grass_tennis), ]
+grass_tennis$diff_rank = grass_tennis$player_0_rank - grass_tennis$player_1_rank
+
+grass_tennis = grass_tennis %>% dplyr::select(features_list, "outcome")
+set.seed(105)
+train_index = createDataPartition(grass_tennis$outcome, p = .8, list = FALSE, times = 1)
+grass_tennis_train = grass_tennis[train_index,]
+grass_tennis_test = grass_tennis[-train_index,]
+```
+
+```{r}
+nn_model = neuralnet(outcome ~ ., data = grass_tennis_train, hidden = 2)
+
+plot(nn_model)
+
+pred_nn = compute(nn_model, grass_tennis_test)
+roc.plot(grass_tennis_test$outcome, pred_nn$net.result)
+roc.area(grass_tennis_test$outcome, pred_nn$net.result)
+mean(grass_tennis_test$outcome == ifelse(pred_nn$net.result > .6, 1, 0))
+
+```
+
+
+
+
+
+
+

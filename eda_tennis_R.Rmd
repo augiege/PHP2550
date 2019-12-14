@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r}
-pacman::p_load(dplyr, caret, corrplot, MASS)
+pacman::p_load(dplyr, caret, corrplot, MASS, verification, MLmetrics)
 ```
 
 ```{r}
@@ -35,6 +35,37 @@ reduced_model = stepAIC(glm(outcome ~ ., data = grass_tennis, family = "binomial
 summary(reduced_model)
 
 reduced_feats = c("diff_rank", "diff_match_win_percent", "diff_5_set_match_win_percent", "diff_match_win_percent_grass", "diff_games_win_percent_grass", "diff_5_set_match_win_percent_grass", "diff_match_win_percent_52", "diff_games_win_percent_grass_60", "diff_games_win_percent_hh")
+grass_tennis_select = grass_tennis %>% dplyr::select(reduced_feats, "outcome")
 
+pairs(grass_tennis[,reduced_feats], labels = c("Rank diff", "W % diff", "5set W % diff", "W % diff G", "W games % diff G", "5set W % diff G", "W % diff 52", "W % diff G 60", "W games % diff HH"))
+
+grass_tennis_select1 = grass_tennis_select
+colnames(grass_tennis_select1) = c("Rank diff", "W % diff", "5set W % diff", "W % diff G", "W games % diff G", "5set W % diff G", "W % diff 52", "W % diff G 60", "W games % diff HH", "outcome")
+corrplot(cor(grass_tennis_select1))
 ```
+
+```{r}
+log_reg_model = glm(outcome ~ ., data = grass_tennis_select, family = "binomial")
+sum.log_reg = summary(log_reg_model)
+sum.log_reg
+lg_preds = predict(log_reg_model, newdata = grass_tennis_select)
+mean(grass_tennis_select$outcome == ifelse(lg_preds > .1, 1, 0)) # Accuracy
+roc.plot(grass_tennis_select$outcome, lg_preds)
+roc.area(grass_tennis_select$outcome, lg_preds)
+```
+
+```{r}
+log_reg_model2 = glm(outcome ~ (diff_rank + diff_match_win_percent + diff_5_set_match_win_percent + diff_match_win_percent_grass + diff_games_win_percent_grass + diff_5_set_match_win_percent_grass + diff_match_win_percent_52 + diff_games_win_percent_grass_60 + diff_games_win_percent_hh)^2, data = grass_tennis_select, family = "binomial")
+
+sum.log_reg2 = summary(log_reg_model2)
+sum.log_reg2
+lg2_preds = predict(log_reg_model2, newdata = grass_tennis_select)
+mean(grass_tennis_select$outcome == ifelse(lg2_preds > .1, 1, 0)) # Accuracy
+roc.plot(grass_tennis_select$outcome, lg2_preds)
+roc.area(grass_tennis_select$outcome, lg2_preds)
+
+F1_Score(grass_tennis_select$outcome, ifelse(lg2_preds > .1, 1, 0))
+```
+
+
 

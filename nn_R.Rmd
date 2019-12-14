@@ -38,7 +38,7 @@ plot(nn_model)
 pred_nn = compute(nn_model, grass_tennis_test)
 roc.plot(grass_tennis_test$outcome, pred_nn$net.result)
 roc.area(grass_tennis_test$outcome, pred_nn$net.result)
-mean(grass_tennis_test$outcome == ifelse(pred_nn$net.result > .6, 1, 0))
+mean(grass_tennis_test$outcome == ifelse(pred_nn$net.result > .6, 1, 0)) # Accuracy
 
 ```
 
